@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shriram Finance - BTL Performance & Branch Ranking Portal</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Chart.js for Visual Performance Distribution -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f8fafc;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      height: 6px;
+      width: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    .badge-rank-1 {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: white;
+      box-shadow: 0 4px 12px rgba(217, 119, 6, 0.35);
+    }
+    .badge-rank-2 {
+      background: linear-gradient(135deg, #94a3b8, #475569);
+      color: white;
+      box-shadow: 0 4px 10px rgba(71, 85, 105, 0.3);
+    }
+    .badge-rank-3 {
+      background: linear-gradient(135deg, #f97316, #b45309);
+      color: white;
+      box-shadow: 0 4px 10px rgba(180, 83, 9, 0.3);
+    }
+    .shriram-red {
+      background-color: #e11d48;
+    }
+    .shriram-navy {
+      background-color: #0f172a;
+    }
+  </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen flex flex-col">
+
+  <!-- Notification Toast Container -->
+  <div id="toast" class="fixed top-5 right-5 z-50 transform transition-all duration-300 translate-y-[-100px] opacity-0 flex items-center p-4 text-sm rounded-xl shadow-xl max-w-sm">
+    <div id="toast-icon" class="mr-3 text-lg"></div>
+    <div id="toast-msg" class="font-medium"></div>
+  </div>
+
+  <!-- Header -->
+  <header class="bg-slate-900 border-b border-slate-800 text-white sticky top-0 z-30 shadow-lg">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center space-x-3">
+        <div class="w-11 h-11 rounded-xl bg-gradient-to-tr from-amber-500 via-rose-600 to-red-600 flex items-center justify-center text-white shadow-md font-extrabold text-xl">
+          <i class="fa-solid fa-building-columns"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="text-xs bg-red-600 text-white font-black px-2 py-0.5 rounded tracking-wider uppercase">Shriram Finance Limited</span>
+            <span class="text-[11px] bg-amber-400 text-slate-900 font-bold px-1.5 py-0.2 rounded-full uppercase">BTL Scorecard</span>
+          </div>
+          <h1 class="text-base sm:text-lg font-bold tracking-tight text-white flex items-center gap-2">
+            Branch Ranking & Operational SLA Matrix
+          </h1>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center space-x-2">
+        <button onclick="openConfigModal()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs sm:text-sm font-semibold rounded-lg border border-slate-700 transition flex items-center gap-1.5 shadow-sm">
+          <i class="fa-solid fa-sliders text-amber-400"></i>
+          <span>Rule Weights</span>
+        </button>
+        <button onclick="exportToCSV()" class="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-600 text-white text-xs sm:text-sm font-semibold rounded-lg transition flex items-center gap-1.5 shadow-sm">
+          <i class="fa-solid fa-file-excel"></i>
+          <span>Export Excel</span>
+        </button>
+        <button onclick="resetDefaultsModal()" class="px-3 py-1.5 bg-rose-900/40 hover:bg-rose-900/60 text-rose-300 text-xs sm:text-sm font-semibold rounded-lg border border-rose-800/40 transition flex items-center gap-1.5">
+          <i class="fa-solid fa-rotate-right"></i>
+          <span>Reset</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Layout -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-5 space-y-5">
+
+    <!-- KPI Summary Cards -->
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
+        <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Branches</p>
+        <h3 id="stat-branch-count" class="text-xl font-black text-slate-800">13</h3>
+        <p class="text-[10px] text-emerald-600 font-medium">BTLs Tracked</p>
+      </div>
+
+      <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
+        <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Total Disbursals</p>
+        <h3 id="stat-total-disbursed" class="text-xl font-black text-slate-800">0 Files</h3>
+        <p class="text-[10px] text-indigo-600 font-medium">Loan Count</p>
+      </div>
+
+      <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
+        <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Avg SLIC %</p>
+        <h3 id="stat-avg-slic" class="text-xl font-black text-emerald-600">0%</h3>
+        <p class="text-[10px] text-slate-500 font-medium">Over 100% bonus</p>
+      </div>
+
+      <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
+        <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Avg SGIC %</p>
+        <h3 id="stat-avg-sgic" class="text-xl font-black text-blue-600">0%</h3>
+        <p class="text-[10px] text-slate-500 font-medium">Over 100% bonus</p>
+      </div>
+
+      <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
+        <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">7D Loan Dispatch</p>
+        <h3 id="stat-avg-dispatch" class="text-xl font-black text-purple-600">0%</h3>
+        <p class="text-[10px] text-purple-600 font-medium">Parent & Child</p>
+      </div>
+
+      <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
+        <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Avg Udyam %</p>
+        <h3 id="stat-avg-udyam" class="text-xl font-black text-amber-600">0%</h3>
+        <p class="text-[10px] text-amber-600 font-medium">Udyam Registration</p>
+      </div>
+    </div>
+
+    <!-- Podium / Top 3 Performers -->
+    <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-red-950 rounded-2xl p-5 text-white shadow-md relative overflow-hidden">
+      <div class="relative z-10">
+        <div class="flex items-center justify-between mb-3">
+          <div>
+            <span class="text-[10px] uppercase tracking-widest text-amber-400 font-bold">Shriram Finance Performance Ranking</span>
+            <h2 class="text-lg font-bold flex items-center gap-2">
+              <i class="fa-solid fa-trophy text-amber-400"></i> Leading Branch Team Leaders (BTL)
+            </h2>
+          </div>
+          <span class="text-xs bg-slate-800/80 border border-slate-700 px-3 py-1 rounded-full text-slate-300">
+            Real-time multi-metric rank scoring
+          </span>
+        </div>
+
+        <div id="top-podium-container" class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Table View -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <!-- Toolbar -->
+      <div class="p-4 border-b border-slate-200 flex flex-col md:flex-row items-center justify-between gap-3 bg-slate-50/70">
+        <div class="flex items-center space-x-2 w-full md:w-auto">
+          <div class="relative w-full sm:w-72">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+            <input type="text" id="search-input" oninput="handleSearch()" placeholder="Search branch or BTL..." 
+              class="w-full pl-9 pr-4 py-2 text-xs sm:text-sm bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 shadow-2xs">
+          </div>
+          <select id="sort-select" onchange="handleSortChange()" class="text-xs sm:text-sm bg-white border border-slate-300 rounded-xl px-3 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-red-500">
+            <option value="rank_asc">Sort: Rank (1st to Last)</option>
+            <option value="score_desc">Sort: Highest Total Points</option>
+            <option value="disb_desc">Sort: Disbursal Count</option>
+            <option value="tat_desc">Sort: Best Avg TAT</option>
+            <option value="slic_desc">Sort: SLIC Achievement %</option>
+            <option value="sgic_desc">Sort: SGIC Achievement %</option>
+            <option value="dispatch_desc">Sort: 7-Day Loan Dispatch %</option>
+            <option value="udyam_desc">Sort: Udyam %</option>
+          </select>
+        </div>
+
+        <div class="flex items-center space-x-2 text-xs text-slate-600">
+          <span class="inline-flex items-center gap-1 bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-semibold text-[11px]">
+            <i class="fa-solid fa-bolt"></i> >100% Target Booster active for SLIC & SGIC
+          </span>
+        </div>
+      </div>
+
+      <!-- Data Table -->
+      <div class="overflow-x-auto custom-scrollbar">
+        <table class="w-full text-left text-xs sm:text-sm border-collapse">
+          <thead>
+            <tr class="bg-slate-100/80 text-slate-700 font-bold text-[11px] border-b border-slate-200 uppercase tracking-wider">
+              <th class="py-3 px-3 text-center w-12">Rank</th>
+              <th class="py-3 px-3 min-w-[170px]">Branch & BTL</th>
+              <th class="py-3 px-3 text-right min-w-[110px]">
+                Disbursed Count
+                <span class="block text-[9px] text-slate-400 font-normal">Files / % Target</span>
+              </th>
+              <th class="py-3 px-3 text-center min-w-[95px]">
+                Avg TAT
+                <span class="block text-[9px] text-slate-400 font-normal">≤ 3.5 Days Max</span>
+              </th>
+              <th class="py-3 px-3 text-center min-w-[100px]">
+                SLIC Target
+                <span class="block text-[9px] text-slate-400 font-normal">100%+ Bonus</span>
+              </th>
+              <th class="py-3 px-3 text-center min-w-[100px]">
+                SGIC Target
+                <span class="block text-[9px] text-slate-400 font-normal">100%+ Bonus</span>
+              </th>
+              <th class="py-3 px-3 text-center min-w-[115px]">
+                Dispatch ≤ 7D
+                <span class="block text-[9px] text-slate-400 font-normal">Parent & Child</span>
+              </th>
+              <th class="py-3 px-3 text-center min-w-[105px]">
+                Udyam %
+                <span class="block text-[9px] text-slate-400 font-normal">Target %</span>
+              </th>
+              <th class="py-3 px-3 text-center min-w-[95px]">
+                Total Points
+                <span class="block text-[9px] text-slate-400 font-normal">Weighted</span>
+              </th>
+              <th class="py-3 px-3 text-center min-w-[90px]">Status</th>
+              <th class="py-3 px-3 text-center w-20">Action</th>
+            </tr>
+          </thead>
+          <tbody id="branch-table-body" class="divide-y divide-slate-100">
+            <!-- Populated via Javascript -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Charts & Analytics Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 pt-1">
+      <!-- Performance Distribution Chart -->
+      <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-2">
+            <i class="fa-solid fa-chart-column text-red-600"></i> BTL Branch Overall Score Ranking
+          </h3>
+          <span class="text-xs text-slate-400">Total Score</span>
+        </div>
+        <div class="h-64">
+          <canvas id="scoreBarChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Comparison Chart: Insurance Penetration (SLIC vs SGIC) -->
+      <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-2">
+            <i class="fa-solid fa-shield-virus text-indigo-600"></i> SLIC vs SGIC Achievement Tracking
+          </h3>
+          <span class="text-xs text-slate-400">% Target</span>
+        </div>
+        <div class="h-64">
+          <canvas id="comparisonChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scoring Logic Explainer -->
+    <div class="bg-slate-900 border border-slate-800 text-white rounded-2xl p-5 shadow-sm">
+      <div class="flex items-center justify-between mb-3">
+        <h4 class="font-bold flex items-center gap-2 text-amber-400 text-sm">
+          <i class="fa-solid fa-scale-balanced"></i> Shriram Finance Limited - BTL Points Allocation Model
+        </h4>
+        <span class="text-[11px] bg-red-600 text-white px-2.5 py-0.5 rounded-full font-semibold">Standard SLA Policy</span>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs leading-relaxed text-slate-300">
+        <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700">
+          <span class="font-bold text-white block mb-1">1. Disbursal Count & TAT</span>
+          <p><strong class="text-amber-400">Disbursal Count:</strong> <span id="txt-w-disb">30</span> pts based on file target achievement.</p>
+          <p><strong class="text-amber-400">Avg TAT:</strong> <span id="txt-w-tat">15</span> pts for ≤3.5 days; penalties for delay beyond SLA.</p>
+        </div>
+        <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700">
+          <span class="font-bold text-white block mb-1">2. Insurance Targets</span>
+          <p><strong class="text-emerald-400">SLIC Target:</strong> <span id="txt-w-slic">20</span> pts (Up to 150% booster!).</p>
+          <p><strong class="text-blue-400">SGIC Target:</strong> <span id="txt-w-sgic">20</span> pts (Up to 150% booster!).</p>
+        </div>
+        <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700">
+          <span class="font-bold text-white block mb-1">3. 7-Day Loan Dispatch</span>
+          <p><strong class="text-purple-400">Parent & Child:</strong> <span id="txt-w-dispatch">10</span> pts for dispatch within 07 calendar days SLA.</p>
+        </div>
+        <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700">
+          <span class="font-bold text-white block mb-1">4. Compliance & Verification</span>
+          <p><strong class="text-amber-400">Udyam Registration:</strong> <span id="txt-w-udyam">5</span> pts for Udyam registration target achievement.</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="mt-auto py-3 bg-white border-t border-slate-200 text-center text-xs text-slate-500">
+    Shriram Finance Limited • Operational Scorecard & BTL Performance Intelligence
+  </footer>
+
+  <!-- MODAL: Edit Branch Performance Data -->
+  <div id="editModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl max-w-xl w-full p-5 sm:p-6 shadow-2xl border border-slate-100 my-8">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div>
+          <span class="text-[10px] font-bold text-red-600 uppercase tracking-wider">Shriram Finance Ltd</span>
+          <h3 class="text-base font-bold text-slate-900" id="modal-branch-name">Update Branch Performance</h3>
+          <p class="text-xs text-slate-500" id="modal-branch-sub">Record actual monthly numbers for BTL scoring</p>
+        </div>
+        <button onclick="closeEditModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form id="editBranchForm" onsubmit="saveBranchData(event)" class="space-y-3.5 pt-3 text-xs sm:text-sm">
+        <input type="hidden" id="edit-branch-id">
+
+        <div>
+          <label class="block font-medium text-slate-700 mb-1">Branch Name</label>
+          <input type="text" id="edit-branch-name-input" required
+            class="w-full px-3 py-1.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:outline-none">
+        </div>
+
+        <div>
+          <label class="block font-medium text-slate-700 mb-1">Branch Team Leader (BTL) Name</label>
+          <input type="text" id="edit-btl-name" required
+            class="w-full px-3 py-1.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:outline-none">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-medium text-slate-700 mb-1">Disbursed Count (No. of Files)</label>
+            <input type="number" step="1" min="0" id="edit-disbursed-amt" required
+              class="w-full px-3 py-1.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:outline-none">
+          </div>
+          <div>
+            <label class="block font-medium text-slate-700 mb-1">Target Count (No. of Files)</label>
+            <input type="number" step="1" min="1" id="edit-target-amt" required
+              class="w-full px-3 py-1.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:outline-none">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2">
+          <div>
+            <label class="block font-medium text-slate-700 mb-1">Avg TAT (Days)</label>
+            <input type="number" step="0.1" min="0.5" max="30" id="edit-tat-days" required
+              class="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:outline-none">
+            <span class="text-[10px] text-slate-400">Target: ≤3.5d</span>
+          </div>
+          <div>
+            <label class="block font-medium text-slate-700 mb-1">SLIC Achieved (%)</label>
+            <input type="number" step="0.5" min="0" max="200" id="edit-slic-pct" required
+              class="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:outline-none">
+            <span class="text-[10px] text-emerald-600">100%, 125%, 150%+</span>
+          </div>
+          <div>
+            <label class="block font-medium text-slate-700 mb-1">SGIC Achieved (%)</label>
+            <input type="number" step="0.5" min="0" max="200" id="edit-sgic-pct" required
+              class="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:outline-none">
+            <span class="text-[10px] text-blue-600">100%, 125%, 150%+</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-medium text-slate-700 mb-1">Parent & Child Loan Dispatch ≤ 7D (%)</label>
+            <input type="number" step="0.5" min="0" max="100" id="edit-dispatch-pct" required
+              class="w-full px-3 py-1.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:outline-none">
+            <span class="text-[10px] text-slate-400">Within 7 days timeline</span>
+          </div>
+          <div>
+            <label class="block font-medium text-slate-700 mb-1">Udyam Registration (%)</label>
+            <input type="number" step="0.5" min="0" max="150" id="edit-udyam-pct" required
+              class="w-full px-3 py-1.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:outline-none">
+            <span class="text-[10px] text-slate-400">Udyam registration %</span>
+          </div>
+        </div>
+
+        <!-- Dynamic Preview of points -->
+        <div class="bg-red-50 p-3 rounded-xl border border-red-100 flex items-center justify-between text-red-950">
+          <div>
+            <span class="text-xs font-bold block">Live Rating Preview</span>
+            <span class="text-[10px] text-red-700">Points including over-target bonuses</span>
+          </div>
+          <div id="modal-point-preview" class="text-xl font-black text-red-700">-- Pts</div>
+        </div>
+
+        <div class="flex items-center justify-end space-x-2 pt-2">
+          <button type="button" onclick="closeEditModal()" class="px-3.5 py-1.5 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 transition">Cancel</button>
+          <button type="submit" class="px-4 py-1.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg shadow transition">Save & Recalculate</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Configure Weights & Rules -->
+  <div id="configModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl border border-slate-100 my-8">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+        <div>
+          <span class="text-[10px] font-bold text-red-600 uppercase tracking-wider">Shriram Finance</span>
+          <h3 class="text-base font-bold text-slate-900">Scorecard Weight Configuration</h3>
+        </div>
+        <button onclick="closeConfigModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <p class="text-xs text-slate-500 my-2">Calibrate points awarded to each parameter (Base Total = 100 Pts):</p>
+
+      <form id="configForm" onsubmit="saveWeights(event)" class="space-y-2.5 pt-1 text-xs sm:text-sm">
+        <div>
+          <div class="flex justify-between text-xs mb-0.5">
+            <label class="font-medium text-slate-700">1. Disbursal Count Target Weight</label>
+            <span id="label-w-disb" class="font-bold text-red-600">30 pts</span>
+          </div>
+          <input type="range" id="input-w-disb" min="10" max="50" value="30" class="w-full accent-red-600" oninput="updateWeightLabels()">
+        </div>
+
+        <div>
+          <div class="flex justify-between text-xs mb-0.5">
+            <label class="font-medium text-slate-700">2. TAT Timeline Weight</label>
+            <span id="label-w-tat" class="font-bold text-red-600">15 pts</span>
+          </div>
+          <input type="range" id="input-w-tat" min="5" max="30" value="15" class="w-full accent-red-600" oninput="updateWeightLabels()">
+        </div>
+
+        <div>
+          <div class="flex justify-between text-xs mb-0.5">
+            <label class="font-medium text-slate-700">3. SLIC Target Weight</label>
+            <span id="label-w-slic" class="font-bold text-emerald-600">20 pts</span>
+          </div>
+          <input type="range" id="input-w-slic" min="5" max="35" value="20" class="w-full accent-emerald-600" oninput="updateWeightLabels()">
+        </div>
+
+        <div>
+          <div class="flex justify-between text-xs mb-0.5">
+            <label class="font-medium text-slate-700">4. SGIC Target Weight</label>
+            <span id="label-w-sgic" class="font-bold text-blue-600">20 pts</span>
+          </div>
+          <input type="range" id="input-w-sgic" min="5" max="35" value="20" class="w-full accent-blue-600" oninput="updateWeightLabels()">
+        </div>
+
+        <div>
+          <div class="flex justify-between text-xs mb-0.5">
+            <label class="font-medium text-slate-700">5. 07-Day Dispatch SLA Weight</label>
+            <span id="label-w-dispatch" class="font-bold text-purple-600">10 pts</span>
+          </div>
+          <input type="range" id="input-w-dispatch" min="5" max="25" value="10" class="w-full accent-purple-600" oninput="updateWeightLabels()">
+        </div>
+
+        <div>
+          <div class="flex justify-between text-xs mb-0.5">
+            <label class="font-medium text-slate-700">6. Udyam Registration % Weight</label>
+            <span id="label-w-udyam" class="font-bold text-amber-600">5 pts</span>
+          </div>
+          <input type="range" id="input-w-udyam" min="2" max="20" value="5" class="w-full accent-amber-600" oninput="updateWeightLabels()">
+        </div>
+
+        <div class="p-2.5 bg-slate-50 rounded-xl flex justify-between items-center text-xs">
+          <span class="font-bold text-slate-700">Base Weight Sum:</span>
+          <span id="total-weight-sum" class="font-black text-sm text-red-600">100 / 100</span>
+        </div>
+
+        <div class="flex items-center justify-end space-x-2 pt-2">
+          <button type="button" onclick="closeConfigModal()" class="px-3 py-1.5 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50">Cancel</button>
+          <button type="submit" class="px-4 py-1.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg shadow">Apply Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    // 13 Branches from the original image
+    const initialBranchList = [
+      "LUCKNOW I BRANCH",
+      "BAHRAICH BRANCH",
+      "IKAUNA BRANCH",
+      "SITAPUR BRANCH",
+      "RAIBAREILLY BRANCH",
+      "AMETHI BRANCH",
+      "LUCKNOW BRANCH",
+      "BARABANKI BRANCH",
+      "HAIDERGARH BRANCH",
+      "NANPARA BRANCH",
+      "LAKHIMPUR KHIRI I BRANCH",
+      "LAKHIMPUR KHIRI BRANCH",
+      "LALGANJ"
+    ];
+
+    // Dummy sample BTL names for realistic preview
+    const sampleBTLs = [
+      "Amit Srivastava", "Virendra Singh", "Pradeep Kumar", "Rohan Verma",
+      "Suresh Tiwari", "Anurag Mishra", "Manish Pandey", "Pooja Sharma",
+      "Dileep Yadav", "Mohit Shukla", "Vivek Ranjan", "Gaurav Awasthi", "Rajesh Tripathi"
+    ];
+
+    // Scoring weights configuration (Shriram Finance Model)
+    let weights = {
+      disbursal: 30,
+      tat: 15,
+      slic: 20,
+      sgic: 20,
+      dispatch: 10,
+      udyam: 5
+    };
+
+    // Branch Dataset
+    let branchData = [];
+
+    // Pre-seed initial operational data
+    function generateInitialData() {
+      branchData = initialBranchList.map((branch, index) => {
+        const target = 25 + (index % 5) * 5; // Target in count of files (e.g. 25, 30, 35...)
+        const disbursed = Math.round(target * (0.80 + ((index * 0.05) % 0.45))); // Disbursed file count
+        const tat = Number((2.6 + ((index * 0.9) % 4.2)).toFixed(1)); // TAT in Days
+        
+        // SLIC & SGIC with some over-achieving (125%, 150%)
+        const slic = [100, 125, 90, 110, 150, 95, 130, 85, 100, 140, 105, 155, 92][index] || 100;
+        const sgic = [95, 100, 125, 80, 145, 110, 90, 150, 105, 85, 135, 120, 100][index] || 100;
+        
+        // SLA compliances
+        const dispatch = Math.min(100, Math.round(75 + ((index * 7) % 25))); // 7-day dispatch%
+        const udyam = Math.min(100, Math.round(70 + ((index * 6) % 30))); // Udyam Registration%
+
+        return {
+          id: 'BR-' + (index + 1),
+          name: branch,
+          btl: sampleBTLs[index] || "BTL Incharge",
+          target: target,
+          disbursed: disbursed,
+          tatDays: tat,
+          slicPct: slic,
+          sgicPct: sgic,
+          dispatch7DaysPct: dispatch,
+          udyamPct: udyam,
+          score: 0,
+          rank: 0
+        };
+      });
+
+      calculateScoresAndRanks();
+    }
+
+    // Helper: Calculate insurance booster points (100%, 125%, 150%+)
+    function calculateInsuranceScore(pct, baseWeight) {
+      if (pct >= 150) {
+        // 150% and above gets 1.35x booster
+        return baseWeight * 1.35;
+      } else if (pct >= 125) {
+        // 125% to 149% gets 1.20x booster
+        return baseWeight * 1.20;
+      } else if (pct >= 100) {
+        // 100% to 124% gets full weight (1.0x) + small pro-rata
+        const extra = ((pct - 100) / 25) * 0.20;
+        return baseWeight * (1.0 + extra);
+      } else {
+        // Below 100% gets proportional score
+        return (pct / 100) * baseWeight;
+      }
+    }
+
+    // Scoring Formula calculation
+    function calculatePoints(item) {
+      // 1. Disbursal Count Score
+      const disbursalRatio = item.target > 0 ? (item.disbursed / item.target) : 0;
+      const disbursalPoints = Math.min(weights.disbursal * 1.25, disbursalRatio * weights.disbursal);
+
+      // 2. TAT Score (Target benchmark: <= 3.5 days)
+      let tatPoints = 0;
+      if (item.tatDays <= 3.5) {
+        tatPoints = weights.tat;
+      } else if (item.tatDays <= 7.0) {
+        const factor = Math.max(0, (7.0 - item.tatDays) / (7.0 - 3.5));
+        tatPoints = weights.tat * (0.35 + 0.65 * factor);
+      } else {
+        tatPoints = weights.tat * 0.2;
+      }
+
+      // 3. SLIC Points (with over-achievement 125% and 150% boost)
+      const slicPoints = calculateInsuranceScore(item.slicPct, weights.slic);
+
+      // 4. SGIC Points (with over-achievement 125% and 150% boost)
+      const sgicPoints = calculateInsuranceScore(item.sgicPct, weights.sgic);
+
+      // 5. Parent & Child Loan Dispatched <= 7 Days SLA
+      const dispatchPoints = (Math.min(100, item.dispatch7DaysPct) / 100) * weights.dispatch;
+
+      // 6. Udyam Registration %
+      const udyamPoints = (Math.min(100, item.udyamPct) / 100) * weights.udyam;
+
+      const total = disbursalPoints + tatPoints + slicPoints + sgicPoints + dispatchPoints + udyamPoints;
+      return Number(total.toFixed(2));
+    }
+
+    function calculateScoresAndRanks() {
+      // Calculate scores
+      branchData.forEach(item => {
+        item.score = calculatePoints(item);
+      });
+
+      // Sort descending by score to assign rank
+      const sorted = [...branchData].sort((a, b) => b.score - a.score);
+      sorted.forEach((item, index) => {
+        const found = branchData.find(b => b.id === item.id);
+        if (found) {
+          found.rank = index + 1;
+        }
+      });
+    }
+
+    // Render Table and UI elements
+    let currentSort = "rank_asc";
+    let searchQuery = "";
+
+    function renderUI() {
+      calculateScoresAndRanks();
+      renderStats();
+      renderPodium();
+      renderTable();
+      renderCharts();
+    }
+
+    function renderStats() {
+      document.getElementById('stat-branch-count').textContent = branchData.length;
+
+      const totalDisbursed = branchData.reduce((acc, curr) => acc + curr.disbursed, 0);
+      document.getElementById('stat-total-disbursed').textContent = `${totalDisbursed} Files`;
+
+      const avgSlic = Math.round(branchData.reduce((acc, curr) => acc + curr.slicPct, 0) / branchData.length);
+      document.getElementById('stat-avg-slic').textContent = `${avgSlic}%`;
+
+      const avgSgic = Math.round(branchData.reduce((acc, curr) => acc + curr.sgicPct, 0) / branchData.length);
+      document.getElementById('stat-avg-sgic').textContent = `${avgSgic}%`;
+
+      const avgDispatch = Math.round(branchData.reduce((acc, curr) => acc + curr.dispatch7DaysPct, 0) / branchData.length);
+      document.getElementById('stat-avg-dispatch').textContent = `${avgDispatch}%`;
+
+      const avgUdyam = Math.round(branchData.reduce((acc, curr) => acc + curr.udyamPct, 0) / branchData.length);
+      document.getElementById('stat-avg-udyam').textContent = `${avgUdyam}%`;
+    }
+
+    function renderPodium() {
+      const sortedByRank = [...branchData].sort((a, b) => a.rank - b.rank);
+      const top3 = sortedByRank.slice(0, 3);
+      const container = document.getElementById('top-podium-container');
+
+      const icons = [
+        '<i class="fa-solid fa-crown text-amber-300 text-2xl"></i>',
+        '<i class="fa-solid fa-medal text-slate-300 text-xl"></i>',
+        '<i class="fa-solid fa-award text-amber-600 text-xl"></i>'
+      ];
+      const borders = [
+        'border-amber-400 bg-amber-500/10',
+        'border-slate-400 bg-slate-500/10',
+        'border-amber-700 bg-amber-700/10'
+      ];
+
+      container.innerHTML = top3.map((branch, idx) => `
+        <div class="border ${borders[idx]} rounded-xl p-3.5 flex items-center justify-between backdrop-blur-sm shadow-xs transition hover:scale-[1.01]">
+          <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-slate-800/90 border border-slate-700">
+              ${icons[idx]}
+            </div>
+            <div>
+              <span class="text-[10px] font-bold uppercase tracking-wider text-amber-400">Rank #${branch.rank} • Shriram Star</span>
+              <h4 class="font-bold text-sm text-white leading-tight">${branch.name}</h4>
+              <p class="text-[11px] text-slate-300">BTL: <span class="font-medium text-white">${branch.btl}</span></p>
+            </div>
+          </div>
+          <div class="text-right">
+            <div class="text-base font-black text-amber-400">${branch.score}</div>
+            <div class="text-[9px] text-slate-300 uppercase">Points</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function getRankBadge(rank) {
+      if (rank === 1) {
+        return `<span class="inline-flex items-center justify-center w-6 h-6 rounded-full badge-rank-1 font-black text-xs">1</span>`;
+      } else if (rank === 2) {
+        return `<span class="inline-flex items-center justify-center w-6 h-6 rounded-full badge-rank-2 font-black text-xs">2</span>`;
+      } else if (rank === 3) {
+        return `<span class="inline-flex items-center justify-center w-6 h-6 rounded-full badge-rank-3 font-black text-xs">3</span>`;
+      } else {
+        return `<span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-100 text-slate-700 font-bold text-xs border border-slate-200">#${rank}</span>`;
+      }
+    }
+
+    function getPerformanceGrade(score) {
+      if (score >= 95) return `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">Star ★</span>`;
+      if (score >= 80) return `<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">Excellent</span>`;
+      if (score >= 65) return `<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-100 text-blue-800 border border-blue-200">Good</span>`;
+      return `<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-100 text-rose-800 border border-rose-200">Action Req</span>`;
+    }
+
+    function getTargetBadge(val) {
+      if (val >= 150) {
+        return `<span class="px-1.5 py-0.5 rounded text-[10px] font-black bg-purple-100 text-purple-800 border border-purple-300">${val}% 🔥</span>`;
+      } else if (val >= 125) {
+        return `<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">${val}% ⚡</span>`;
+      } else if (val >= 100) {
+        return `<span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">${val}% ✓</span>`;
+      } else {
+        return `<span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-200">${val}%</span>`;
+      }
+    }
+
+    function renderTable() {
+      let filtered = branchData.filter(b => 
+        b.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        b.btl.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+
+      // Sorting
+      filtered.sort((a, b) => {
+        switch (currentSort) {
+          case 'rank_asc': return a.rank - b.rank;
+          case 'score_desc': return b.score - a.score;
+          case 'disb_desc': return b.disbursed - a.disbursed;
+          case 'tat_desc': return a.tatDays - b.tatDays;
+          case 'slic_desc': return b.slicPct - a.slicPct;
+          case 'sgic_desc': return b.sgicPct - a.sgicPct;
+          case 'dispatch_desc': return b.dispatch7DaysPct - a.dispatch7DaysPct;
+          case 'udyam_desc': return b.udyamPct - a.udyamPct;
+          default: return a.rank - b.rank;
+        }
+      });
+
+      const tbody = document.getElementById('branch-table-body');
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="11" class="text-center py-8 text-slate-400">No matching branches found.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(b => {
+        const achievementPct = ((b.disbursed / b.target) * 100).toFixed(0);
+        const achievementColor = achievementPct >= 100 ? 'text-emerald-600 font-bold' : 'text-slate-600';
+
+        return `
+          <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+            <td class="py-2.5 px-3 text-center">
+              ${getRankBadge(b.rank)}
+            </td>
+            <td class="py-2.5 px-3">
+              <div class="font-bold text-slate-900 leading-snug flex items-center gap-1.5">
+                <span>${b.name}</span>
+                <button onclick="openEditModal('${b.id}')" title="Rename branch" class="text-slate-400 hover:text-red-600 text-[10px]">
+                  <i class="fa-solid fa-pen"></i>
+                </button>
+              </div>
+              <div class="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5">
+                <i class="fa-solid fa-user-tie text-[10px] text-red-500"></i>
+                <span>${b.btl}</span>
+              </div>
+            </td>
+            <td class="py-2.5 px-3 text-right">
+              <div class="font-bold text-slate-800">${b.disbursed} Files</div>
+              <div class="text-[10px] ${achievementColor}">${achievementPct}% of ${b.target} target</div>
+            </td>
+            <td class="py-2.5 px-3 text-center">
+              <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-semibold ${b.tatDays <= 3.5 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : (b.tatDays <= 5.5 ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-rose-50 text-rose-700 border border-rose-200')}">
+                ${b.tatDays}d
+              </span>
+            </td>
+            <td class="py-2.5 px-3 text-center">
+              ${getTargetBadge(b.slicPct)}
+            </td>
+            <td class="py-2.5 px-3 text-center">
+              ${getTargetBadge(b.sgicPct)}
+            </td>
+            <td class="py-2.5 px-3 text-center">
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium ${b.dispatch7DaysPct >= 95 ? 'text-emerald-700 bg-emerald-50' : 'text-slate-700 bg-slate-100'}">
+                ${b.dispatch7DaysPct}%
+              </span>
+            </td>
+            <td class="py-2.5 px-3 text-center">
+              <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium ${b.udyamPct >= 90 ? 'text-emerald-700 bg-emerald-50' : 'text-slate-600 bg-slate-100'}">
+                ${b.udyamPct}%
+              </span>
+            </td>
+            <td class="py-2.5 px-3 text-center">
+              <div class="text-sm font-black text-red-600">${b.score}</div>
+              <div class="text-[9px] text-slate-400 font-semibold">pts</div>
+            </td>
+            <td class="py-2.5 px-3 text-center">
+              ${getPerformanceGrade(b.score)}
+            </td>
+            <td class="py-2.5 px-3 text-center">
+              <button onclick="openEditModal('${b.id}')" class="p-1 px-2 text-[11px] bg-slate-100 hover:bg-red-50 text-slate-600 hover:text-red-600 rounded-md border border-slate-200 hover:border-red-200 transition flex items-center mx-auto gap-1">
+                <i class="fa-solid fa-pen-to-square"></i>
+                <span>Edit</span>
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // Chart Management
+    let barChartInstance = null;
+    let compChartInstance = null;
+
+    function renderCharts() {
+      const sortedByRank = [...branchData].sort((a, b) => a.rank - b.rank);
+      const labels = sortedByRank.map(b => b.name.replace(" BRANCH", ""));
+      const scores = sortedByRank.map(b => b.score);
+
+      // Score Distribution Bar Chart
+      const ctx1 = document.getElementById('scoreBarChart').getContext('2d');
+      if (barChartInstance) barChartInstance.destroy();
+
+      barChartInstance = new Chart(ctx1, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Shriram BTL Score',
+            data: scores,
+            backgroundColor: scores.map(s => s >= 90 ? '#e11d48' : (s >= 75 ? '#f97316' : '#94a3b8')),
+            borderRadius: 5
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: { color: '#f1f5f9' },
+              ticks: { font: { size: 10 } }
+            },
+            x: {
+              grid: { display: false },
+              ticks: { font: { size: 8.5 }, maxRotation: 45, minRotation: 45 }
+            }
+          }
+        }
+      });
+
+      // Comparison Chart: SLIC vs SGIC
+      const ctx2 = document.getElementById('comparisonChart').getContext('2d');
+      if (compChartInstance) compChartInstance.destroy();
+
+      const slicScores = sortedByRank.map(b => b.slicPct);
+      const sgicScores = sortedByRank.map(b => b.sgicPct);
+
+      compChartInstance = new Chart(ctx2, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'SLIC Achieved %',
+              data: slicScores,
+              backgroundColor: '#10b981',
+              borderRadius: 4
+            },
+            {
+              label: 'SGIC Achieved %',
+              data: sgicScores,
+              backgroundColor: '#3b82f6',
+              borderRadius: 4
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'top', labels: { boxWidth: 10, font: { size: 10 } } }
+          },
+          scales: {
+            y: {
+              title: { display: true, text: '% Achievement', font: { size: 9 } },
+              grid: { color: '#f1f5f9' },
+              ticks: { font: { size: 9 } }
+            },
+            x: {
+              grid: { display: false },
+              ticks: { font: { size: 8.5 }, maxRotation: 45, minRotation: 45 }
+            }
+          }
+        }
+      });
+    }
+
+    // Modal Interaction Handlers
+    function openEditModal(branchId) {
+      const branch = branchData.find(b => b.id === branchId);
+      if (!branch) return;
+
+      document.getElementById('edit-branch-id').value = branch.id;
+      document.getElementById('modal-branch-name').textContent = `Edit Details - ${branch.name}`;
+      document.getElementById('edit-branch-name-input').value = branch.name;
+
+      document.getElementById('edit-btl-name').value = branch.btl;
+      document.getElementById('edit-disbursed-amt').value = branch.disbursed;
+      document.getElementById('edit-target-amt').value = branch.target;
+      document.getElementById('edit-tat-days').value = branch.tatDays;
+      document.getElementById('edit-slic-pct').value = branch.slicPct;
+      document.getElementById('edit-sgic-pct').value = branch.sgicPct;
+      document.getElementById('edit-dispatch-pct').value = branch.dispatch7DaysPct;
+      document.getElementById('edit-udyam-pct').value = branch.udyamPct;
+
+      updateModalPreview();
+
+      const inputs = [
+        'edit-disbursed-amt', 'edit-target-amt', 'edit-tat-days', 
+        'edit-slic-pct', 'edit-sgic-pct', 'edit-dispatch-pct', 'edit-udyam-pct'
+      ];
+      inputs.forEach(id => {
+        document.getElementById(id).oninput = updateModalPreview;
+      });
+
+      document.getElementById('editModal').classList.remove('hidden');
+    }
+
+    function updateModalPreview() {
+      const target = parseFloat(document.getElementById('edit-target-amt').value) || 1;
+      const disbursed = parseFloat(document.getElementById('edit-disbursed-amt').value) || 0;
+      const tat = parseFloat(document.getElementById('edit-tat-days').value) || 0;
+      const slic = parseFloat(document.getElementById('edit-slic-pct').value) || 0;
+      const sgic = parseFloat(document.getElementById('edit-sgic-pct').value) || 0;
+      const dispatch = parseFloat(document.getElementById('edit-dispatch-pct').value) || 0;
+      const udyam = parseFloat(document.getElementById('edit-udyam-pct').value) || 0;
+
+      const dummy = { 
+        target, 
+        disbursed, 
+        tatDays: tat, 
+        slicPct: slic, 
+        sgicPct: sgic,
+        dispatch7DaysPct: dispatch,
+        udyamPct: udyam
+      };
+      const previewScore = calculatePoints(dummy);
+      document.getElementById('modal-point-preview').textContent = `${previewScore} Pts`;
+    }
+
+    function closeEditModal() {
+      document.getElementById('editModal').classList.add('hidden');
+    }
+
+    function saveBranchData(e) {
+      e.preventDefault();
+      const id = document.getElementById('edit-branch-id').value;
+      const branch = branchData.find(b => b.id === id);
+      if (!branch) return;
+
+      branch.name = document.getElementById('edit-branch-name-input').value.trim();
+      branch.btl = document.getElementById('edit-btl-name').value.trim();
+      branch.disbursed = parseInt(document.getElementById('edit-disbursed-amt').value, 10);
+      branch.target = parseInt(document.getElementById('edit-target-amt').value, 10);
+      branch.tatDays = parseFloat(document.getElementById('edit-tat-days').value);
+      branch.slicPct = parseFloat(document.getElementById('edit-slic-pct').value);
+      branch.sgicPct = parseFloat(document.getElementById('edit-sgic-pct').value);
+      branch.dispatch7DaysPct = parseFloat(document.getElementById('edit-dispatch-pct').value);
+      branch.udyamPct = parseFloat(document.getElementById('edit-udyam-pct').value);
+
+      closeEditModal();
+      renderUI();
+      showToast(`Updated performance scorecard for ${branch.name}`, "success");
+    }
+
+    // Config Weights Modal
+    function openConfigModal() {
+      document.getElementById('input-w-disb').value = weights.disbursal;
+      document.getElementById('input-w-tat').value = weights.tat;
+      document.getElementById('input-w-slic').value = weights.slic;
+      document.getElementById('input-w-sgic').value = weights.sgic;
+      document.getElementById('input-w-dispatch').value = weights.dispatch;
+      document.getElementById('input-w-udyam').value = weights.udyam;
+
+      updateWeightLabels();
+      document.getElementById('configModal').classList.remove('hidden');
+    }
+
+    function closeConfigModal() {
+      document.getElementById('configModal').classList.add('hidden');
+    }
+
+    function updateWeightLabels() {
+      const wD = parseInt(document.getElementById('input-w-disb').value);
+      const wT = parseInt(document.getElementById('input-w-tat').value);
+      const wSlic = parseInt(document.getElementById('input-w-slic').value);
+      const wSgic = parseInt(document.getElementById('input-w-sgic').value);
+      const wP = parseInt(document.getElementById('input-w-dispatch').value);
+      const wUdyam = parseInt(document.getElementById('input-w-udyam').value);
+
+      document.getElementById('label-w-disb').textContent = `${wD} pts`;
+      document.getElementById('label-w-tat').textContent = `${wT} pts`;
+      document.getElementById('label-w-slic').textContent = `${wSlic} pts`;
+      document.getElementById('label-w-sgic').textContent = `${wSgic} pts`;
+      document.getElementById('label-w-dispatch').textContent = `${wP} pts`;
+      document.getElementById('label-w-udyam').textContent = `${wUdyam} pts`;
+
+      const sum = wD + wT + wSlic + wSgic + wP + wUdyam;
+      const sumEl = document.getElementById('total-weight-sum');
+      sumEl.textContent = `${sum} / 100`;
+      sumEl.className = sum === 100 ? 'font-black text-sm text-emerald-600' : 'font-black text-sm text-red-600';
+    }
+
+    function saveWeights(e) {
+      e.preventDefault();
+      weights.disbursal = parseInt(document.getElementById('input-w-disb').value);
+      weights.tat = parseInt(document.getElementById('input-w-tat').value);
+      weights.slic = parseInt(document.getElementById('input-w-slic').value);
+      weights.sgic = parseInt(document.getElementById('input-w-sgic').value);
+      weights.dispatch = parseInt(document.getElementById('input-w-dispatch').value);
+      weights.udyam = parseInt(document.getElementById('input-w-udyam').value);
+
+      document.getElementById('txt-w-disb').textContent = weights.disbursal;
+      document.getElementById('txt-w-tat').textContent = weights.tat;
+      document.getElementById('txt-w-slic').textContent = weights.slic;
+      document.getElementById('txt-w-sgic').textContent = weights.sgic;
+      document.getElementById('txt-w-dispatch').textContent = weights.dispatch;
+      document.getElementById('txt-w-udyam').textContent = weights.udyam;
+
+      closeConfigModal();
+      renderUI();
+      showToast("Shriram Finance score weights updated successfully!", "success");
+    }
+
+    // Reset Confirmation
+    function resetDefaultsModal() {
+      generateInitialData();
+      renderUI();
+      showToast("Branch records and scores reset to default", "info");
+    }
+
+    // Search and Sort Filter Handlers
+    function handleSearch() {
+      searchQuery = document.getElementById('search-input').value;
+      renderTable();
+    }
+
+    function handleSortChange() {
+      currentSort = document.getElementById('sort-select').value;
+      renderTable();
+    }
+
+    // Export to CSV Function
+    function exportToCSV() {
+      const headers = [
+        "Rank", "Branch Name", "BTL Name", "Target Count (Files)", "Disbursed Count (Files)", 
+        "Achievement %", "Avg TAT (Days)", "SLIC Target %", "SGIC Target %", 
+        "7D Loan Dispatch %", "Udyam %", "Total Points"
+      ];
+      const rows = branchData
+        .sort((a, b) => a.rank - b.rank)
+        .map(b => [
+          b.rank,
+          `"${b.name}"`,
+          `"${b.btl}"`,
+          b.target,
+          b.disbursed,
+          ((b.disbursed / b.target) * 100).toFixed(1) + "%",
+          b.tatDays,
+          b.slicPct + "%",
+          b.sgicPct + "%",
+          b.dispatch7DaysPct + "%",
+          b.udyamPct + "%",
+          b.score
+        ]);
+
+      const csvContent = "data:text/csv;charset=utf-8," + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `Shriram_Finance_BTL_Ranking_${new Date().toISOString().slice(0, 10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      showToast("Shriram Finance BTL scorecard exported to CSV!", "success");
+    }
+
+    // Toast Notifications
+    function showToast(message, type = "success") {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toast-msg');
+      const toastIcon = document.getElementById('toast-icon');
+
+      toastMsg.textContent = message;
+
+      if (type === "success") {
+        toast.className = "fixed top-5 right-5 z-50 transform transition-all duration-300 flex items-center p-3.5 text-xs sm:text-sm rounded-xl shadow-xl max-w-sm bg-slate-900 text-emerald-400 border border-emerald-500/30";
+        toastIcon.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
+      } else {
+        toast.className = "fixed top-5 right-5 z-50 transform transition-all duration-300 flex items-center p-3.5 text-xs sm:text-sm rounded-xl shadow-xl max-w-sm bg-slate-900 text-amber-400 border border-amber-500/30";
+        toastIcon.innerHTML = '<i class="fa-solid fa-circle-info"></i>';
+      }
+
+      toast.style.transform = "translateY(0)";
+      toast.style.opacity = "1";
+
+      setTimeout(() => {
+        toast.style.transform = "translateY(-100px)";
+        toast.style.opacity = "0";
+      }, 3200);
+    }
+
+    // Initializer on load
+    window.onload = function() {
+      generateInitialData();
+      renderUI();
+    };
+  </script>
+</body>
+</html>
